@@ -7,26 +7,40 @@ import {
   type ExecuteCodeResponse,
 } from "@shared/schema";
 
+// Default versions for supported languages
+const defaultVersions: Record<string, string> = {
+  python: "3.10.0",
+  javascript: "18.15.0",
+  typescript: "5.0.3",
+  java: "15.0.2",
+  c: "10.2.0",
+  cpp: "10.2.0",
+  go: "1.16.2",
+  rust: "1.68.2",
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Execute code using Piston API
   app.post("/api/execute", async (req, res) => {
     try {
       const validatedData = executeCodeSchema.parse(req.body);
 
+      const language = validatedData.language;
+      let version = validatedData.version;
+
+      // Fill default version if missing
+      if (!version || version.trim() === "" || version === "latest") {
+        version = defaultVersions[language] || "latest";
+      }
+
       // Call Piston API to execute code
       const pistonResponse = await fetch("https://emkc.org/api/v2/piston/execute", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          language: validatedData.language,
-          version: validatedData.version,
-          files: [
-            {
-              content: validatedData.code,
-            },
-          ],
+          language,
+          version,
+          files: [{ content: validatedData.code }],
           stdin: validatedData.stdin || "",
         }),
       });
@@ -39,11 +53,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pistonData = await pistonResponse.json();
       console.log("Piston API response:", JSON.stringify(pistonData, null, 2));
 
-      // Piston API returns data directly, not nested in a 'run' property
       const response: ExecuteCodeResponse = {
         stdout: pistonData.stdout || pistonData.run?.stdout || "",
         stderr: pistonData.stderr || pistonData.run?.stderr || "",
-        exitCode: pistonData.code !== undefined ? pistonData.code : (pistonData.run?.code !== undefined ? pistonData.run.code : 0),
+        exitCode:
+          pistonData.code !== undefined
+            ? pistonData.code
+            : pistonData.run?.code !== undefined
+            ? pistonData.run.code
+            : 0,
         executionTime: pistonData.time || pistonData.run?.time || undefined,
       };
 
