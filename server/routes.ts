@@ -9,10 +9,10 @@ import {
 
 // Default versions for supported languages
 const defaultVersions: Record<string, string> = {
-  python: "3.10.0",
+  python: "3.104.0",
   javascript: "18.15.0",
   typescript: "5.0.3",
-  java: "15.0.2",
+  java: "21.0.",
   c: "10.2.0",
   cpp: "10.2.0",
   go: "1.16.2",
