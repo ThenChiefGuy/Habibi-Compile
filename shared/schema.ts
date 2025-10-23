@@ -20,7 +20,7 @@ export const defaultCode: Record<LanguageId, string> = {
 # Write Python 3 code and run it
 
 print("Hello, World!")`,
-  
+
   java: `// Online Java compiler
 // Write Java code and run it
 
@@ -29,18 +29,18 @@ public class Main {
         System.out.println("Hello, World!");
     }
 }`,
-  
+
   javascript: `// Online JavaScript compiler
 // Write JavaScript code and run it
 
 console.log("Hello, World!");`,
-  
+
   typescript: `// Online TypeScript compiler
 // Write TypeScript code and run it
 
 const message: string = "Hello, World!";
 console.log(message);`,
-  
+
   c: `// Online C compiler
 // Write C code and run it
 
@@ -50,7 +50,7 @@ int main() {
     printf("Hello, World!\\n");
     return 0;
 }`,
-  
+
   cpp: `// Online C++ compiler
 // Write C++ code and run it
 
@@ -61,7 +61,7 @@ int main() {
     cout << "Hello, World!" << endl;
     return 0;
 }`,
-  
+
   go: `// Online Go compiler
 // Write Go code and run it
 
@@ -72,7 +72,7 @@ import "fmt"
 func main() {
     fmt.Println("Hello, World!")
 }`,
-  
+
   rust: `// Online Rust compiler
 // Write Rust code and run it
 
@@ -84,7 +84,7 @@ fn main() {
 // Code execution request schema
 export const executeCodeSchema = z.object({
   language: z.string(),
-  version: z.string(),
+  version: z.string().optional(), // ✅ make optional
   code: z.string(),
   stdin: z.string().optional(),
 });
