@@ -7,12 +7,12 @@ import {
   type ExecuteCodeResponse,
 } from "@shared/schema";
 
-// Default versions for supported languages
+// Default versions for supported languages - MUST match Piston API runtimes
 const defaultVersions: Record<string, string> = {
-  python: "3.104.0",
+  python: "3.10.0",      // Fixed from 3.104.0
   javascript: "18.15.0",
   typescript: "5.0.3",
-  java: "21.0.0",
+  java: "15.0.2",        // Fixed from 21.0.
   c: "10.2.0",
   cpp: "10.2.0",
   go: "1.16.2",
@@ -30,8 +30,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Fill default version if missing
       if (!version || version.trim() === "" || version === "latest") {
-        version = defaultVersions[language] || "latest";
+        version = defaultVersions[language] || "*";
       }
+
+      console.log(`Executing ${language} with version: ${version}`);
 
       // Call Piston API to execute code
       const pistonResponse = await fetch("https://emkc.org/api/v2/piston/execute", {
@@ -45,24 +47,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }),
       });
 
-      if (!pistonResponse.ok) {
-        const errorText = await pistonResponse.text();
-        throw new Error(`Piston API error: ${errorText}`);
-      }
-
       const pistonData = await pistonResponse.json();
       console.log("Piston API response:", JSON.stringify(pistonData, null, 2));
 
+      if (!pistonResponse.ok || pistonData.message) {
+        throw new Error(pistonData.message || `Piston API error: ${pistonResponse.statusText}`);
+      }
+
       const response: ExecuteCodeResponse = {
-        stdout: pistonData.stdout || pistonData.run?.stdout || "",
-        stderr: pistonData.stderr || pistonData.run?.stderr || "",
-        exitCode:
-          pistonData.code !== undefined
-            ? pistonData.code
-            : pistonData.run?.code !== undefined
-            ? pistonData.run.code
-            : 0,
-        executionTime: pistonData.time || pistonData.run?.time || undefined,
+        stdout: pistonData.run?.stdout || "",
+        stderr: pistonData.run?.stderr || "",
+        exitCode: pistonData.run?.code !== undefined ? pistonData.run.code : 0,
+        executionTime: pistonData.run?.time || undefined,
       };
 
       console.log("Sending response:", JSON.stringify(response, null, 2));
